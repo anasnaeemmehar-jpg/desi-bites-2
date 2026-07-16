@@ -9,6 +9,7 @@ const EMPTY_FORM = {
   price: '',
   description: '',
   image: '',
+  images: [],
   badge: '',
   rating: 4.5,
   available: true,
@@ -310,7 +311,11 @@ function StatCard({ label, value, icon, color }) {
 }
 
 function ItemForm({ item, onSave, onCancel }) {
-  const [form, setForm] = useState(item)
+  const [form, setForm] = useState({
+    ...item,
+    images: item.images || (item.image ? [item.image] : []),
+  })
+  const [newImageUrl, setNewImageUrl] = useState('')
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -318,11 +323,33 @@ function ItemForm({ item, onSave, onCancel }) {
       alert('Please fill in name, price and description!')
       return
     }
+    // First image is the main image
+    const images = form.images && form.images.length > 0 ? form.images : (form.image ? [form.image] : [])
     onSave({
       ...form,
       price: Number(form.price),
       rating: Number(form.rating) || 4.5,
+      images,
+      image: images[0] || form.image,
     })
+  }
+
+  const addImage = () => {
+    if (!newImageUrl.trim()) return
+    setForm({ ...form, images: [...(form.images || []), newImageUrl.trim()] })
+    setNewImageUrl('')
+  }
+
+  const removeImage = (index) => {
+    setForm({ ...form, images: form.images.filter((_, i) => i !== index) })
+  }
+
+  const moveImage = (index, direction) => {
+    const newImages = [...form.images]
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= newImages.length) return
+    ;[newImages[index], newImages[newIndex]] = [newImages[newIndex], newImages[index]]
+    setForm({ ...form, images: newImages })
   }
 
   return (
@@ -379,19 +406,53 @@ function ItemForm({ item, onSave, onCancel }) {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold mb-1">Image URL</label>
-              <input
-                type="url"
-                value={form.image}
-                onChange={e => setForm({ ...form, image: e.target.value })}
-                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-spice-500 focus:outline-none"
-                placeholder="https://images.unsplash.com/..."
-              />
-              <p className="text-xs text-gray-500 mt-1">💡 Tip: Use Unsplash for free food images</p>
-              {form.image && (
-                <img src={form.image} alt="preview" className="mt-2 w-24 h-24 rounded-lg object-cover"
-                  onError={e => e.target.style.display = 'none'} />
+              <label className="block text-sm font-semibold mb-1">Images</label>
+              <p className="text-xs text-gray-500 mb-2">First image is the main image. Add multiple to show in gallery.</p>
+
+              {/* Image previews */}
+              {form.images && form.images.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+                  {form.images.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={img} alt={`Image ${i + 1}`} className="w-full h-20 object-cover rounded-lg"
+                        onError={e => e.target.style.opacity = '0.3'} />
+                      {i === 0 && (
+                        <span className="absolute top-1 left-1 bg-spice-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">
+                          MAIN
+                        </span>
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                        {i > 0 && (
+                          <button type="button" onClick={() => moveImage(i, -1)} className="w-6 h-6 bg-white/90 text-gray-800 rounded-full text-xs font-bold">←</button>
+                        )}
+                        {i < form.images.length - 1 && (
+                          <button type="button" onClick={() => moveImage(i, 1)} className="w-6 h-6 bg-white/90 text-gray-800 rounded-full text-xs font-bold">→</button>
+                        )}
+                        <button type="button" onClick={() => removeImage(i)} className="w-6 h-6 bg-red-500 text-white rounded-full text-xs font-bold">✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
+
+              {/* Add new image */}
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={newImageUrl}
+                  onChange={e => setNewImageUrl(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImage() } }}
+                  className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-spice-500 focus:outline-none text-sm"
+                  placeholder="https://images.unsplash.com/..."
+                />
+                <button type="button" onClick={addImage}
+                  className="px-4 py-2.5 bg-spice-100 hover:bg-spice-200 text-spice-700 rounded-lg font-semibold text-sm">
+                  ➕ Add
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Tip: Get free images from <a href="https://unsplash.com/s/photos/biryani" target="_blank" rel="noreferrer" className="text-spice-600 underline">unsplash.com</a> and paste URL
+              </p>
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1">Badge (optional)</label>

@@ -68,10 +68,17 @@ export default function OrderForm({ cart, updateQty, clearCart }) {
               <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 {cart.map(item => (
                   <div key={item.id} className="bg-white/10 p-4 rounded-xl flex items-center gap-3">
-                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover"
-                      onError={e => { e.target.style.display = 'none' }} />
-                    <div className="flex-1">
-                      <div className="font-semibold">{item.name}</div>
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-16 h-16 rounded-lg object-cover bg-white/20"
+                      onError={e => {
+                        e.target.style.display = 'none'
+                        e.target.parentElement.innerHTML = `<div class="w-16 h-16 rounded-lg bg-white/20 flex items-center justify-center text-3xl">🍽️</div>`
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold truncate">{item.name}</div>
                       <div className="text-spice-200 text-sm">Rs. {item.price}</div>
                     </div>
                     <div className="flex items-center gap-2">

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { categories } from '../data/menu'
+import Lightbox from './Lightbox'
 
 export default function Menu({ items, addToCart }) {
   const [activeCategory, setActiveCategory] = useState('all')
   const [search, setSearch] = useState('')
+  const [lightboxItem, setLightboxItem] = useState(null)
 
   const filtered = items.filter(item => {
     const matchesCategory = activeCategory === 'all' || item.category === activeCategory
@@ -12,12 +14,18 @@ export default function Menu({ items, addToCart }) {
   })
 
   return (
-    <section id="menu" className="py-20 bg-white">
+    <section id="menu" className="py-20 bg-white relative">
+      {/* Decorative top border */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-spice-500 via-turmeric to-spice-500"></div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="section-title">Our Menu</h2>
+          <span className="inline-block bg-spice-100 text-spice-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-3">
+            🍽️ Our Menu
+          </span>
+          <h2 className="section-title">Handcrafted with Love</h2>
           <p className="section-subtitle">
-            Handcrafted with love, made with the freshest ingredients and authentic spices
+            Click on any dish to see more photos. Made with the freshest ingredients and authentic spices.
           </p>
         </div>
 
@@ -54,54 +62,72 @@ export default function Menu({ items, addToCart }) {
 
         {/* Menu grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map(item => (
-            <div
-              key={item.id}
-              className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100"
-            >
-              <div className="relative h-48 overflow-hidden bg-spice-50">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  onError={e => {
-                    e.target.style.display = 'none'
-                    e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-7xl">🍽️</div>`
-                  }}
-                />
-                {item.badge && (
-                  <span className="absolute top-3 left-3 bg-chili text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
-                    {item.badge}
-                  </span>
-                )}
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                  ⭐ {item.rating}
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-display text-xl font-bold text-gray-900">{item.name}</h3>
-                  <span className="text-spice-700 font-bold text-lg whitespace-nowrap">Rs. {item.price}</span>
-                </div>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{item.description}</p>
-                <button
-                  onClick={() => addToCart(item)}
-                  disabled={item.available === false}
-                  className={`w-full font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
-                    item.available === false
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-spice-50 hover:bg-spice-600 text-spice-700 hover:text-white'
-                  }`}
+          {filtered.map(item => {
+            const allImages = item.images && item.images.length > 0 ? item.images : [item.image]
+            return (
+              <div
+                key={item.id}
+                className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100"
+              >
+                <div
+                  className="relative h-56 overflow-hidden bg-spice-50 cursor-pointer"
+                  onClick={() => setLightboxItem(item)}
                 >
-                  {item.available === false ? (
-                    <>❌ Unavailable</>
-                  ) : (
-                    <><span>➕</span> Add to Cart</>
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      e.target.parentElement.innerHTML += `<div class="absolute inset-0 flex items-center justify-center text-7xl">🍽️</div>`
+                    }}
+                  />
+                  {/* Click to expand hint */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-semibold bg-black/60 px-3 py-1.5 rounded-full">
+                      🔍 Click to expand
+                    </span>
+                  </div>
+                  {item.badge && (
+                    <span className="absolute top-3 left-3 bg-chili text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                      {item.badge}
+                    </span>
                   )}
-                </button>
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                    ⭐ {item.rating}
+                  </div>
+                  {allImages.length > 1 && (
+                    <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur text-white text-xs px-2 py-1 rounded-full">
+                      📷 {allImages.length}
+                    </div>
+                  )}
+                </div>
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-display text-xl font-bold text-gray-900">{item.name}</h3>
+                    <span className="text-spice-700 font-bold text-lg whitespace-nowrap">Rs. {item.price}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{item.description}</p>
+                  <button
+                    onClick={() => addToCart(item)}
+                    disabled={item.available === false}
+                    className={`w-full font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                      item.available === false
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-spice-50 hover:bg-spice-600 text-spice-700 hover:text-white'
+                    }`}
+                  >
+                    {item.available === false ? (
+                      <>❌ Unavailable</>
+                    ) : (
+                      <><span>➕</span> Add to Cart</>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {filtered.length === 0 && (
@@ -111,6 +137,19 @@ export default function Menu({ items, addToCart }) {
           </div>
         )}
       </div>
+
+      {/* Lightbox */}
+      {lightboxItem && (
+        <Lightbox
+          images={lightboxItem.images && lightboxItem.images.length > 0 ? lightboxItem.images : [lightboxItem.image]}
+          name={lightboxItem.name}
+          description={lightboxItem.description}
+          price={lightboxItem.price}
+          badge={lightboxItem.badge}
+          isOpen={!!lightboxItem}
+          onClose={() => setLightboxItem(null)}
+        />
+      )}
     </section>
   )
 }
