@@ -7,18 +7,18 @@ import Testimonials from './components/Testimonials'
 import OrderForm from './components/OrderForm'
 import Footer from './components/Footer'
 import Admin from './components/Admin'
-import { getAllItems, saveItems } from './data/menu'
+import { getAllItems, saveItems, getAllCategories, saveCategories } from './data/menu'
 
 export default function App() {
   // Menu items - shared state between Menu and Admin
   const [items, setItems] = useState(() => getAllItems())
 
-  // Persist items to localStorage whenever they change
-  useEffect(() => {
-    saveItems(items)
-  }, [items])
+  // Categories - shared state
+  const [categories, setCategories] = useState(() => getAllCategories())
 
-  // Simple hash routing for /admin
+  useEffect(() => { saveItems(items) }, [items])
+  useEffect(() => { saveCategories(categories) }, [categories])
+
   const [isAdminRoute, setIsAdminRoute] = useState(window.location.hash === '#admin')
 
   useEffect(() => {
@@ -27,14 +27,11 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  // Cart state - persisted in localStorage
   const [cart, setCart] = useState(() => {
     try {
       const saved = localStorage.getItem('desibites-cart')
       return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
+    } catch { return [] }
   })
 
   useEffect(() => {
@@ -66,9 +63,8 @@ export default function App() {
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0)
 
-  // Admin route - render only admin panel
   if (isAdminRoute) {
-    return <Admin items={items} setItems={setItems} />
+    return <Admin items={items} setItems={setItems} categories={categories} setCategories={setCategories} />
   }
 
   return (
@@ -76,7 +72,7 @@ export default function App() {
       <Navbar cartCount={cartCount} />
       <main>
         <Hero />
-        <Menu items={items} addToCart={addToCart} />
+        <Menu items={items} categories={categories} addToCart={addToCart} />
         <About />
         <Testimonials />
         <OrderForm cart={cart} updateQty={updateQty} clearCart={clearCart} />
